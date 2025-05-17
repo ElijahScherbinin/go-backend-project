@@ -1,0 +1,11 @@
+server:
+  host: backend-user-service
+  port: 8000
+
+database:
+  host: backend-user-postgres
+  port: 5432
+  user: admin
+  password: admin
+  dbname: user_service
+  sslmode: disable
