@@ -55,7 +55,6 @@ var mockService *mock.MockUserService = &mock.MockUserService{
 			}
 		}
 		return nil, nil
-
 	},
 	GetAllFunc: func(page, limit int) ([]*model.UserModel, error) {
 		var offset int
@@ -67,10 +66,14 @@ var mockService *mock.MockUserService = &mock.MockUserService{
 		var count int
 		var result []*model.UserModel
 		for index, value := range mockExistModels {
-			if index >= offset && count < limit {
-				result = append(result, value)
-				count++
+			if index < offset {
+				continue
 			}
+			if count >= limit {
+				break
+			}
+			result = append(result, value)
+			count++
 		}
 		return result, nil
 	},
@@ -93,22 +96,20 @@ var mockService *mock.MockUserService = &mock.MockUserService{
 		return false, nil
 	},
 	ExistByUsernameFunc: func(username string) (bool, error) {
-		var count int
 		for _, userModel := range mockExistModels {
 			if userModel.Username == username {
-				count++
+				return true, nil
 			}
 		}
-		return count > 0, nil
+		return false, nil
 	},
 	ExistByUsernameAndNotIdFunc: func(username string, id int) (bool, error) {
-		var count int
 		for _, userModel := range mockExistModels {
 			if userModel.Username == username && userModel.Id != id {
-				count++
+				return true, nil
 			}
 		}
-		return count > 0, nil
+		return false, nil
 	},
 }
 
@@ -213,6 +214,32 @@ func TestGetAllHandler(t *testing.T) {
 
 		dtoResponse = *userMapper.ToDto(*mockExistTwoUserModel)
 		assert.Equal(t, slices.Contains(dtoResponses, dtoResponse), false)
+	})
+
+	t.Run("Get all: page 2 limit 1", func(t *testing.T) {
+		params := url.Values{}
+		params.Set("page", "2")
+		params.Set("limit", "1")
+		req := httptest.NewRequest(http.MethodGet, "/all?"+params.Encode(), nil)
+		res := httptest.NewRecorder()
+		userRouter.ServeHTTP(res, req)
+		assert.Equal(t, res.Code, http.StatusOK)
+
+		var dtoResponses []dto.UserResponse
+		err := json.NewDecoder(res.Body).Decode(&dtoResponses)
+		if err != nil {
+			t.Fail()
+		}
+
+		assert.Equal(t, len(dtoResponses), 1)
+
+		var dtoResponse dto.UserResponse
+
+		dtoResponse = *userMapper.ToDto(*mockExistOneUserModel)
+		assert.Equal(t, slices.Contains(dtoResponses, dtoResponse), false)
+
+		dtoResponse = *userMapper.ToDto(*mockExistTwoUserModel)
+		assert.Equal(t, slices.Contains(dtoResponses, dtoResponse), true)
 	})
 
 	t.Run("Get all: page 1 limit 2", func(t *testing.T) {
