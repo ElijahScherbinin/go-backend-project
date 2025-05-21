@@ -36,7 +36,7 @@ func LoadConfig(path string) (*AppConfig, error) {
 	viperInstance.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
 	if err := viperInstance.ReadInConfig(); err != nil {
-		log.Println("Ошибка чтений YML!", err)
+		log.Println("Ошибка чтения YML!", err)
 		return nil, err
 	}
 
