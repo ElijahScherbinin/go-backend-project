@@ -9,12 +9,14 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"user-service/internal/dto"
 	"user-service/internal/mapper"
 	"user-service/internal/model"
 	"user-service/internal/user"
 	"user-service/internal/user/mock"
+	"user-service/pkg/jwt"
 
 	"github.com/go-playground/assert/v2"
 	"github.com/gorilla/mux"
@@ -118,8 +120,15 @@ var userController user.UserController = NewUserController(mockService)
 var userRouter *mux.Router = mux.NewRouter()
 var userMapper mapper.UserMapper
 
+var token string
+
 func init() {
 	userRouter = user.SetupUserRoutes(userRouter, userController)
+	newToken, err := jwt.GenerateToken(jwt.NewClaims(100, "admin1", "administrator", 24*time.Hour))
+	if err != nil {
+		panic(err)
+	}
+	token = newToken
 }
 
 func TestCreateHandler(t *testing.T) {
@@ -398,15 +407,25 @@ func TestUpdateHandler(t *testing.T) {
 }
 
 func TestDeleteHandler(t *testing.T) {
+
 	t.Run("Empty id", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodDelete, "/users/", nil)
+		req.Header.Add("Authorization", "Bearer "+token)
 		res := httptest.NewRecorder()
 		userRouter.ServeHTTP(res, req)
 		assert.Equal(t, res.Code, http.StatusNotFound)
 	})
 
+	t.Run("No token", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodDelete, "/users/0", nil)
+		res := httptest.NewRecorder()
+		userRouter.ServeHTTP(res, req)
+		assert.Equal(t, res.Code, http.StatusUnauthorized)
+	})
+
 	t.Run("User not found", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodDelete, fmt.Sprint("/users/", mockFreeUserModel.Id), nil)
+		req.Header.Add("Authorization", "Bearer "+token)
 		res := httptest.NewRecorder()
 		userRouter.ServeHTTP(res, req)
 		assert.Equal(t, res.Code, http.StatusNotFound)
@@ -414,6 +433,7 @@ func TestDeleteHandler(t *testing.T) {
 
 	t.Run("User deleted", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodDelete, fmt.Sprint("/users/", mockExistOneUserModel.Id), nil)
+		req.Header.Add("Authorization", "Bearer "+token)
 		res := httptest.NewRecorder()
 		userRouter.ServeHTTP(res, req)
 		assert.Equal(t, res.Code, http.StatusNoContent)
