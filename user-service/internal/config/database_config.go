@@ -2,15 +2,6 @@ package config
 
 import "user-service/internal/config/yml_config"
 
-type ymlDatabaseConfig struct {
-	Host     string `yaml:"host"`
-	Port     int    `yaml:"port"`
-	User     string `yaml:"user"`
-	Password string `yaml:"password"`
-	DBName   string `yaml:"dbname"`
-	SSLMode  string `yaml:"sslmode"`
-}
-
 type DatabaseConfig struct {
 	host     string
 	port     int

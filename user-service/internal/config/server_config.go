@@ -2,11 +2,6 @@ package config
 
 import "user-service/internal/config/yml_config"
 
-type ymlServerConfig struct {
-	Host string `yaml:"host"`
-	Port int    `yaml:"port"`
-}
-
 type ServerConfig struct {
 	host string
 	port int
