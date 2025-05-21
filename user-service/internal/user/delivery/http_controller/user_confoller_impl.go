@@ -24,26 +24,28 @@ type userControllerImpl struct {
 func (userController *userControllerImpl) Create() http.Handler {
 	return http.HandlerFunc(
 		func(responseWriter http.ResponseWriter, requerst *http.Request) {
-			log.Println("UserController.Insert:", requerst.URL.Path, "from", requerst.Host)
+			log.Println("UserController.Create:", requerst.URL.Path, "from", requerst.Host)
 
 			data, err := io.ReadAll(requerst.Body)
 			if err != nil {
-				responseWriter.WriteHeader(http.StatusBadRequest)
+				errText := "Ошибка чтения тела запроса!"
+				http.Error(responseWriter, errText, http.StatusInternalServerError)
 				log.Println(
-					"UserController.Insert:", requerst.URL.Path,
+					"UserController.Create:", requerst.URL.Path,
 					"from", requerst.Host,
-					"Ошибка чтения тела запроса!",
+					errText,
 					err,
 				)
 				return
 			}
 
 			if len(data) == 0 {
-				responseWriter.WriteHeader(http.StatusBadRequest)
+				errText := "Получено пустое тело запроса!"
+				http.Error(responseWriter, errText, http.StatusBadRequest)
 				log.Println(
-					"UserController.Insert:", requerst.URL.Path,
+					"UserController.Create:", requerst.URL.Path,
 					"from", requerst.Host,
-					"Получено пустое тело запроса!",
+					errText,
 					err,
 				)
 				return
@@ -51,11 +53,12 @@ func (userController *userControllerImpl) Create() http.Handler {
 
 			var dtoRequest dto.UserRequest
 			if json.Unmarshal(data, &dtoRequest) != nil {
-				responseWriter.WriteHeader(http.StatusBadRequest)
+				errText := "Ошибка конвертации JSON в dto.UserRequest!"
+				http.Error(responseWriter, errText, http.StatusBadRequest)
 				log.Println(
-					"UserController.Insert:", requerst.URL.Path,
+					"UserController.Create:", requerst.URL.Path,
 					"from", requerst.Host,
-					"Ошибка конвертации JSON в dto.UserRequest!",
+					errText,
 					err,
 				)
 				return
@@ -63,31 +66,34 @@ func (userController *userControllerImpl) Create() http.Handler {
 
 			userModel, err := userController.userMapper.ToModel(dtoRequest)
 			if err != nil {
-				responseWriter.WriteHeader(http.StatusBadRequest)
+				errText := "Ошибка конвертации dto.UserRequest в model.UserModel!"
+				http.Error(responseWriter, errText, http.StatusBadRequest)
 				log.Println(
-					"UserController.Update:", requerst.URL.Path,
+					"UserController.Create:", requerst.URL.Path,
 					"from", requerst.Host,
-					"Ошибка конвертации dto.UserRequest в model.UserModel!",
+					errText,
 					err,
 				)
 				return
 			}
 
 			if isExistUsername, err := userController.userService.ExistByUsername(userModel.Username); err != nil {
-				responseWriter.WriteHeader(http.StatusInternalServerError)
+				errText := "Ошибка проверки существования пользователя с заданным именем!"
+				http.Error(responseWriter, errText, http.StatusInternalServerError)
 				log.Println(
-					"UserController.Insert:", requerst.URL.Path,
+					"UserController.Create:", requerst.URL.Path,
 					"from", requerst.Host,
-					"Ошибка проверки существования пользователя с заданным именем!",
+					errText,
 					err,
 				)
 				return
 			} else if isExistUsername {
-				responseWriter.WriteHeader(http.StatusConflict)
+				errText := "Пользователь с заданным именем уже существует!"
+				http.Error(responseWriter, errText, http.StatusConflict)
 				log.Println(
-					"UserController.Insert:", requerst.URL.Path,
+					"UserController.Create:", requerst.URL.Path,
 					"from", requerst.Host,
-					"Пользователь с заданным именем уже существует!",
+					errText,
 					err,
 				)
 				return
@@ -95,11 +101,12 @@ func (userController *userControllerImpl) Create() http.Handler {
 
 			userModel, err = userController.userService.Create(userModel)
 			if err != nil {
-				responseWriter.WriteHeader(http.StatusInternalServerError)
+				errText := "Ошибка создания записи в базе данных!"
+				http.Error(responseWriter, errText, http.StatusInternalServerError)
 				log.Println(
-					"UserController.Insert:", requerst.URL.Path,
+					"UserController.Create:", requerst.URL.Path,
 					"from", requerst.Host,
-					"Ошибка создания записи в базе данных!",
+					errText,
 					err,
 				)
 				return
@@ -109,11 +116,12 @@ func (userController *userControllerImpl) Create() http.Handler {
 			responseWriter.WriteHeader(http.StatusCreated)
 
 			if err := json.NewEncoder(responseWriter).Encode(dtoResponse); err != nil {
-				responseWriter.WriteHeader(http.StatusInternalServerError)
+				errText := "Ошибка конвертации dto.UserResponse в JSON!"
+				http.Error(responseWriter, errText, http.StatusInternalServerError)
 				log.Println(
-					"UserController.Insert:", requerst.URL.Path,
+					"UserController.Create:", requerst.URL.Path,
 					"from", requerst.Host,
-					"Ошибка конвертации dto.UserResponse в JSON!",
+					errText,
 					err,
 				)
 				return
@@ -143,11 +151,12 @@ func (userController *userControllerImpl) GetAll() http.Handler {
 				case http_helper.ErrParamIsEmpty:
 					pageNubmer = 0
 				default:
-					responseWriter.WriteHeader(http.StatusInternalServerError)
+					errText := "Ошибка конвертации параметра запроса id!"
+					http.Error(responseWriter, errText, http.StatusInternalServerError)
 					log.Println(
 						"UserController.GetAll:", requerst.URL.Path,
 						"from", requerst.Host,
-						"Ошибка конвертации параметра запроса id!",
+						errText,
 						err,
 					)
 					return
@@ -163,11 +172,12 @@ func (userController *userControllerImpl) GetAll() http.Handler {
 				case http_helper.ErrParamIsEmpty:
 					pageLimit = defaultPageLimit
 				default:
-					responseWriter.WriteHeader(http.StatusInternalServerError)
+					errText := "Ошибка конвертации параметра запроса limit!"
+					http.Error(responseWriter, errText, http.StatusInternalServerError)
 					log.Println(
 						"UserController.GetAll:", requerst.URL.Path,
 						"from", requerst.Host,
-						"Ошибка конвертации параметра запроса limit!",
+						errText,
 						err,
 					)
 					return
@@ -176,11 +186,12 @@ func (userController *userControllerImpl) GetAll() http.Handler {
 
 			models, err := userController.userService.GetAll(pageNubmer, pageLimit)
 			if err != nil {
-				responseWriter.WriteHeader(http.StatusInternalServerError)
+				errText := "Ошибка получения списка пользователей!"
+				http.Error(responseWriter, errText, http.StatusInternalServerError)
 				log.Println(
 					"UserController.GetAll:", requerst.URL.Path,
 					"from", requerst.Host,
-					"Ошибка получения списка пользователей!",
+					errText,
 					err,
 				)
 				return
@@ -193,11 +204,12 @@ func (userController *userControllerImpl) GetAll() http.Handler {
 
 			responseWriter.WriteHeader(http.StatusOK)
 			if err := json.NewEncoder(responseWriter).Encode(dtoResponses); err != nil {
-				responseWriter.WriteHeader(http.StatusInternalServerError)
+				errText := "Ошибка конвертации []response.UserResponse в JSON!"
+				http.Error(responseWriter, errText, http.StatusInternalServerError)
 				log.Println(
 					"UserController.GetAll:", requerst.URL.Path,
 					"from", requerst.Host,
-					"Ошибка конвертации []response.UserResponse в JSON!",
+					errText,
 					err,
 				)
 				return
@@ -224,20 +236,22 @@ func (userController *userControllerImpl) GetOne() http.Handler {
 			if err != nil {
 				switch err {
 				case http_helper.ErrParamIsEmpty:
-					responseWriter.WriteHeader(http.StatusBadRequest)
+					errText := "Ошибка заполнения параметра запроса id!"
+					http.Error(responseWriter, errText, http.StatusBadRequest)
 					log.Println(
 						"UserController.GetOne:", requerst.URL.Path,
 						"from", requerst.Host,
-						"Ошибка заполнения параметра запроса id!",
+						errText,
 						err,
 					)
 					return
 				default:
-					responseWriter.WriteHeader(http.StatusInternalServerError)
+					errText := "Ошибка конвертации параметра запроса id!"
+					http.Error(responseWriter, errText, http.StatusInternalServerError)
 					log.Println(
 						"UserController.GetOne:", requerst.URL.Path,
 						"from", requerst.Host,
-						"Ошибка конвертации параметра запроса id!",
+						errText,
 						err,
 					)
 					return
@@ -245,20 +259,22 @@ func (userController *userControllerImpl) GetOne() http.Handler {
 			}
 
 			if isExist, err := userController.userService.ExistById(id); err != nil {
-				responseWriter.WriteHeader(http.StatusInternalServerError)
+				errText := "Ошибка проверки существования пользователя с заданным id!"
+				http.Error(responseWriter, errText, http.StatusInternalServerError)
 				log.Println(
 					"UserController.GetOne:", requerst.URL.Path,
 					"from", requerst.Host,
-					"Ошибка проверки существования пользователя с заданным id!",
+					errText,
 					err,
 				)
 				return
 			} else if !isExist {
-				responseWriter.WriteHeader(http.StatusNotFound)
+				errText := "Пользователь с заданным id не существует!"
+				http.Error(responseWriter, errText, http.StatusNotFound)
 				log.Println(
 					"UserController.GetOne:", requerst.URL.Path,
 					"from", requerst.Host,
-					"Пользователь с заданным id не существует!",
+					errText,
 					err,
 				)
 				return
@@ -266,11 +282,12 @@ func (userController *userControllerImpl) GetOne() http.Handler {
 
 			userModel, err := userController.userService.GetOne(id)
 			if err != nil {
-				responseWriter.WriteHeader(http.StatusInternalServerError)
+				errText := "Ошибка получения пользователя!"
+				http.Error(responseWriter, errText, http.StatusInternalServerError)
 				log.Println(
 					"UserController.GetOne:", requerst.URL.Path,
 					"from", requerst.Host,
-					"Ошибка получения пользователя!",
+					errText,
 					err,
 				)
 				return
@@ -279,11 +296,12 @@ func (userController *userControllerImpl) GetOne() http.Handler {
 			dtoResponse := userController.userMapper.ToDto(*userModel)
 			responseWriter.WriteHeader(http.StatusOK)
 			if err := json.NewEncoder(responseWriter).Encode(dtoResponse); err != nil {
-				responseWriter.WriteHeader(http.StatusInternalServerError)
+				errText := "Ошибка конвертации response.UserResponse в JSON!"
+				http.Error(responseWriter, errText, http.StatusInternalServerError)
 				log.Println(
 					"UserController.GetOne:", requerst.URL.Path,
 					"from", requerst.Host,
-					"Ошибка конвертации response.UserResponse в JSON!",
+					errText,
 					err,
 				)
 				return
@@ -310,20 +328,22 @@ func (userController *userControllerImpl) Update() http.Handler {
 			if err != nil {
 				switch err {
 				case http_helper.ErrParamIsEmpty:
-					responseWriter.WriteHeader(http.StatusBadRequest)
+					errText := "Ошибка заполнения параметра запроса id!"
+					http.Error(responseWriter, errText, http.StatusBadRequest)
 					log.Println(
 						"UserController.Update:", requerst.URL.Path,
 						"from", requerst.Host,
-						"Ошибка заполнения параметра запроса id!",
+						errText,
 						err,
 					)
 					return
 				default:
-					responseWriter.WriteHeader(http.StatusInternalServerError)
+					errText := "Ошибка конвертации параметра запроса id!"
+					http.Error(responseWriter, errText, http.StatusInternalServerError)
 					log.Println(
 						"UserController.Update:", requerst.URL.Path,
 						"from", requerst.Host,
-						"Ошибка конвертации параметра запроса id!",
+						errText,
 						err,
 					)
 					return
@@ -331,20 +351,22 @@ func (userController *userControllerImpl) Update() http.Handler {
 			}
 
 			if isExist, err := userController.userService.ExistById(id); err != nil {
-				responseWriter.WriteHeader(http.StatusInternalServerError)
+				errText := "Ошибка проверки существования пользователя с заданным id!"
+				http.Error(responseWriter, errText, http.StatusInternalServerError)
 				log.Println(
 					"UserController.Update:", requerst.URL.Path,
 					"from", requerst.Host,
-					"Ошибка проверки существования пользователя с заданным id!",
+					errText,
 					err,
 				)
 				return
 			} else if !isExist {
-				responseWriter.WriteHeader(http.StatusNotFound)
+				errText := "Пользователь с заданным id не существует!"
+				http.Error(responseWriter, errText, http.StatusNotFound)
 				log.Println(
 					"UserController.Update:", requerst.URL.Path,
 					"from", requerst.Host,
-					"Пользователь с заданным id не существует!",
+					errText,
 					err,
 				)
 				return
@@ -352,22 +374,24 @@ func (userController *userControllerImpl) Update() http.Handler {
 
 			data, err := io.ReadAll(requerst.Body)
 			if err != nil {
-				responseWriter.WriteHeader(http.StatusBadRequest)
+				errText := "Ошибка чтения тела запроса!"
+				http.Error(responseWriter, errText, http.StatusBadRequest)
 				log.Println(
 					"UserController.Update:", requerst.URL.Path,
 					"from", requerst.Host,
-					"Ошибка чтения тела запроса!",
+					errText,
 					err,
 				)
 				return
 			}
 
 			if len(data) == 0 {
-				responseWriter.WriteHeader(http.StatusBadRequest)
+				errText := "Получено пустое тело запроса!"
+				http.Error(responseWriter, errText, http.StatusBadRequest)
 				log.Println(
 					"UserController.Update:", requerst.URL.Path,
 					"from", requerst.Host,
-					"Получено пустое тело запроса!",
+					errText,
 					err,
 				)
 				return
@@ -375,11 +399,12 @@ func (userController *userControllerImpl) Update() http.Handler {
 
 			var dtoRequest dto.UserRequest
 			if json.Unmarshal(data, &dtoRequest) != nil {
-				responseWriter.WriteHeader(http.StatusBadRequest)
+				errText := "Ошибка конвертации JSON в dto.UserRequest!"
+				http.Error(responseWriter, errText, http.StatusBadRequest)
 				log.Println(
 					"UserController.Update:", requerst.URL.Path,
 					"from", requerst.Host,
-					"Ошибка конвертации JSON в dto.UserRequest!",
+					errText,
 					err,
 				)
 				return
@@ -387,31 +412,34 @@ func (userController *userControllerImpl) Update() http.Handler {
 
 			userModel, err := userController.userMapper.ToModel(dtoRequest)
 			if err != nil {
-				responseWriter.WriteHeader(http.StatusBadRequest)
+				errText := "Ошибка конвертации dto.UserRequest в model.UserModel!"
+				http.Error(responseWriter, errText, http.StatusBadRequest)
 				log.Println(
 					"UserController.Update:", requerst.URL.Path,
 					"from", requerst.Host,
-					"Ошибка конвертации dto.UserRequest в model.UserModel!",
+					errText,
 					err,
 				)
 				return
 			}
 
 			if isExistUsername, err := userController.userService.ExistByUsernameAndNotId(userModel.Username, id); err != nil {
-				responseWriter.WriteHeader(http.StatusInternalServerError)
+				errText := "Ошибка проверки существования пользователя с заданным именем!"
+				http.Error(responseWriter, errText, http.StatusInternalServerError)
 				log.Println(
 					"UserController.Update:", requerst.URL.Path,
 					"from", requerst.Host,
-					"Ошибка проверки существования пользователя с заданным именем!",
+					errText,
 					err,
 				)
 				return
 			} else if isExistUsername {
-				responseWriter.WriteHeader(http.StatusConflict)
+				errText := "Пользователь с заданным именем уже существует!"
+				http.Error(responseWriter, errText, http.StatusConflict)
 				log.Println(
 					"UserController.Update:", requerst.URL.Path,
 					"from", requerst.Host,
-					"Пользователь с заданным именем уже существует!",
+					errText,
 					err,
 				)
 				return
@@ -419,11 +447,12 @@ func (userController *userControllerImpl) Update() http.Handler {
 
 			userModel, err = userController.userService.Update(id, userModel)
 			if err != nil {
-				responseWriter.WriteHeader(http.StatusInternalServerError)
+				errText := "Ошибка обновления записи в базе данных!"
+				http.Error(responseWriter, errText, http.StatusInternalServerError)
 				log.Println(
 					"UserController.Update:", requerst.URL.Path,
 					"from", requerst.Host,
-					"Ошибка обновления записи в базе данных!",
+					errText,
 					err,
 				)
 				return
@@ -432,11 +461,12 @@ func (userController *userControllerImpl) Update() http.Handler {
 			dtoResponse := userController.userMapper.ToDto(*userModel)
 			responseWriter.WriteHeader(http.StatusOK)
 			if err := json.NewEncoder(responseWriter).Encode(dtoResponse); err != nil {
-				responseWriter.WriteHeader(http.StatusInternalServerError)
+				errText := "Ошибка конвертации response.UserResponse в JSON!"
+				http.Error(responseWriter, errText, http.StatusInternalServerError)
 				log.Println(
 					"UserController.Update:", requerst.URL.Path,
 					"from", requerst.Host,
-					"Ошибка конвертации response.UserResponse в JSON!",
+					errText,
 					err,
 				)
 				return
@@ -463,20 +493,22 @@ func (userController *userControllerImpl) Delete() http.Handler {
 			if err != nil {
 				switch err {
 				case http_helper.ErrParamIsEmpty:
-					responseWriter.WriteHeader(http.StatusBadRequest)
+					errText := "Ошибка заполнения параметра запроса id!"
+					http.Error(responseWriter, errText, http.StatusBadRequest)
 					log.Println(
 						"UserController.Delete:", requerst.URL.Path,
 						"from", requerst.Host,
-						"Ошибка заполнения параметра запроса id!",
+						errText,
 						err,
 					)
 					return
 				default:
-					responseWriter.WriteHeader(http.StatusInternalServerError)
+					errText := "Ошибка конвертации параметра запроса id!"
+					http.Error(responseWriter, errText, http.StatusInternalServerError)
 					log.Println(
 						"UserController.Delete:", requerst.URL.Path,
 						"from", requerst.Host,
-						"Ошибка конвертации параметра запроса id!",
+						errText,
 						err,
 					)
 					return
@@ -484,31 +516,34 @@ func (userController *userControllerImpl) Delete() http.Handler {
 			}
 
 			if isExist, err := userController.userService.ExistById(id); err != nil {
-				responseWriter.WriteHeader(http.StatusInternalServerError)
+				errText := "Ошибка проверки существования пользователя с заданным id!"
+				http.Error(responseWriter, errText, http.StatusInternalServerError)
 				log.Println(
 					"UserController.Delete:", requerst.URL.Path,
 					"from", requerst.Host,
-					"Ошибка проверки существования пользователя с заданным id!",
+					errText,
 					err,
 				)
 				return
 			} else if !isExist {
-				responseWriter.WriteHeader(http.StatusNotFound)
+				errText := "Пользователь с заданным id не существует!"
+				http.Error(responseWriter, errText, http.StatusNotFound)
 				log.Println(
 					"UserController.Delete:", requerst.URL.Path,
 					"from", requerst.Host,
-					"Пользователь с заданным id не существует!",
+					errText,
 					err,
 				)
 				return
 			}
 
 			if err := userController.userService.Delete(id); err != nil {
-				responseWriter.WriteHeader(http.StatusInternalServerError)
+				errText := "Ошибка удаления пользователя!"
+				http.Error(responseWriter, errText, http.StatusInternalServerError)
 				log.Println(
 					"UserController.Delete:", requerst.URL.Path,
 					"from", requerst.Host,
-					"Ошибка удаления пользователя!",
+					errText,
 					err,
 				)
 				return
