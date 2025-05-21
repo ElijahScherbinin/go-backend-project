@@ -24,7 +24,7 @@ func (userRepository *userRepositoryImpl) Create(userModel *model.UserModel) (*m
 	dbConnect.QueryRow(
 		"INSERT INTO users (username, password_hash) VALUES ($1, $2) returning id",
 		&userModel.Username,
-		&userModel.Password,
+		&userModel.Password_Hash,
 	).Scan(&id)
 
 	return userRepository.getOneById(id)
@@ -46,7 +46,7 @@ func (userRepository *userRepositoryImpl) GetAll(offset, limit int) ([]*model.Us
 	var users []*model.UserModel
 	for rows.Next() {
 		var foundUser model.UserModel
-		if err := rows.Scan(&foundUser.Id, &foundUser.Username, &foundUser.Password); err != nil {
+		if err := rows.Scan(&foundUser.Id, &foundUser.Username, &foundUser.Password_Hash); err != nil {
 			log.Println("Ошибка сканирования строки из запроса GetAll!")
 			continue
 		}
@@ -71,7 +71,7 @@ func (userRepository *userRepositoryImpl) Update(id int, userModel *model.UserMo
 
 	result, err := dbConnect.Exec("UPDATE users SET username=$1, password_hash=$2 WHERE id=$3",
 		&userModel.Username,
-		&userModel.Password,
+		&userModel.Password_Hash,
 		&id,
 	)
 	if err != nil {
@@ -166,7 +166,7 @@ func (userRepository *userRepositoryImpl) getOneById(id int) (*model.UserModel, 
 	}
 
 	var foundUser model.UserModel
-	err = row.Scan(&foundUser.Id, &foundUser.Username, &foundUser.Password)
+	err = row.Scan(&foundUser.Id, &foundUser.Username, &foundUser.Password_Hash)
 	if err != nil {
 		return nil, err
 	}

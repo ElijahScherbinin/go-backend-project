@@ -14,21 +14,20 @@ type UserController interface {
 	Delete() http.Handler
 }
 
-func NewUserHandler(userController UserController) http.Handler {
-	userRouter := mux.NewRouter()
+func SetupUserRoutes(router *mux.Router, userController UserController) *mux.Router {
 
-	postRoutes := userRouter.Methods(http.MethodPost).Subrouter()
-	postRoutes.Handle("/", userController.Create())
+	postRoutes := router.Methods(http.MethodPost).Subrouter()
+	postRoutes.Handle("/users", userController.Create())
 
-	getRoutes := userRouter.Methods(http.MethodGet).Subrouter()
-	getRoutes.Handle("/all", userController.GetAll())
-	getRoutes.Handle("/{id:[0-9]+}", userController.GetOne())
+	getRoutes := router.Methods(http.MethodGet).Subrouter()
+	getRoutes.Handle("/users/all", userController.GetAll())
+	getRoutes.Handle("/users/{id:[0-9]+}", userController.GetOne())
 
-	putRoutes := userRouter.Methods(http.MethodPut).Subrouter()
-	putRoutes.Handle("/{id:[0-9]+}", userController.Update())
+	putRoutes := router.Methods(http.MethodPut).Subrouter()
+	putRoutes.Handle("/users/{id:[0-9]+}", userController.Update())
 
-	deleteRoutes := userRouter.Methods(http.MethodDelete).Subrouter()
-	deleteRoutes.Handle("/{id:[0-9]+}", userController.Delete())
+	deleteRoutes := router.Methods(http.MethodDelete).Subrouter()
+	deleteRoutes.Handle("/users/{id:[0-9]+}", userController.Delete())
 
-	return http.Handler(userRouter)
+	return router
 }

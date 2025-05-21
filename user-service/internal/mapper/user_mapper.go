@@ -1,6 +1,8 @@
 package mapper
 
 import (
+	"crypto/sha256"
+	"fmt"
 	"user-service/internal/dto"
 	"user-service/internal/model"
 
@@ -13,9 +15,10 @@ func (userMapper UserMapper) ToModel(userRequest dto.UserRequest) (*model.UserMo
 	if err := validator.New().Struct(userRequest); err != nil {
 		return nil, err
 	}
+	password_hash := sha256.Sum256([]byte(userRequest.Password))
 	return &model.UserModel{
-		Username: userRequest.Username,
-		Password: userRequest.Password,
+		Username:      userRequest.Username,
+		Password_Hash: fmt.Sprintf("%x", password_hash),
 	}, nil
 }
 

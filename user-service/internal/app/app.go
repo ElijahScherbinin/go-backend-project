@@ -2,7 +2,6 @@ package app
 
 import (
 	"log"
-	"net/http"
 	"user-service/internal/config"
 	"user-service/internal/server"
 	"user-service/internal/user"
@@ -32,10 +31,8 @@ func Run() {
 	var userService user.UserService = service.NewUserService(userRepository)
 	var userController user.UserController = http_controller.NewUserController(userService)
 
-	var routerInstance *mux.Router = mux.NewRouter()
-	routerInstance.PathPrefix("/user").Handler(
-		http.StripPrefix("/user", user.NewUserHandler(userController)),
-	)
+	routerInstance := mux.NewRouter()
+	user.SetupUserRoutes(routerInstance, userController)
 
 	routerInstance.Handle("/metrics", promhttp.Handler())
 

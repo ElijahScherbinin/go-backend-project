@@ -8,9 +8,7 @@ DROP TABLE IF EXISTS users;
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(32) NOT NULL UNIQUE,
-    password_hash VARCHAR(255) NOT NULL,
-    email VARCHAR(100) NOT NULL UNIQUE
+    password_hash VARCHAR(64) NOT NULL
 );
 
 CREATE INDEX idx_username ON users (username);
-CREATE INDEX idx_email ON users (email);

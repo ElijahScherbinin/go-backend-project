@@ -3,6 +3,7 @@ package service
 import (
 	"user-service/internal/model"
 	"user-service/internal/user"
+	"user-service/internal/user/prometheus"
 )
 
 type userServiceImpl struct {
@@ -67,5 +68,6 @@ func (userService *userServiceImpl) ExistByUsernameAndNotId(username string, id 
 func NewUserService(userRepository user.UserRepository) user.UserService {
 	return &userServiceImpl{
 		userRepository: userRepository,
+		userPrometheus: prometheus.NewUserPrometheus(),
 	}
 }

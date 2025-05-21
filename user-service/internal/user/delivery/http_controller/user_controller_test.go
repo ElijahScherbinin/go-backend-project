@@ -17,25 +17,26 @@ import (
 	"user-service/internal/user/mock"
 
 	"github.com/go-playground/assert/v2"
+	"github.com/gorilla/mux"
 )
 
 const jsonRequestTemplate string = "{\"username\": \"%s\", \"password\": \"%s\"}"
 
 var (
 	mockExistOneUserModel *model.UserModel = &model.UserModel{
-		Id:       1,
-		Username: "user1",
-		Password: "12345678",
+		Id:            1,
+		Username:      "user1",
+		Password_Hash: "12345678",
 	}
 	mockExistTwoUserModel *model.UserModel = &model.UserModel{
-		Id:       2,
-		Username: "user2",
-		Password: "12345678",
+		Id:            2,
+		Username:      "user2",
+		Password_Hash: "12345678",
 	}
 	mockFreeUserModel *model.UserModel = &model.UserModel{
-		Id:       0,
-		Username: "free",
-		Password: "12345678",
+		Id:            0,
+		Username:      "free",
+		Password_Hash: "12345678",
 	}
 )
 
@@ -79,9 +80,9 @@ var mockService *mock.MockUserService = &mock.MockUserService{
 	},
 	UpdateFunc: func(id int, userModel *model.UserModel) (*model.UserModel, error) {
 		return &model.UserModel{
-			Id:       id,
-			Username: userModel.Username,
-			Password: userModel.Password,
+			Id:            id,
+			Username:      userModel.Username,
+			Password_Hash: userModel.Password_Hash,
 		}, nil
 	},
 	DeleteFunc: func(id int) error {
@@ -114,19 +115,23 @@ var mockService *mock.MockUserService = &mock.MockUserService{
 }
 
 var userController user.UserController = NewUserController(mockService)
-var userRouter http.Handler = user.NewUserHandler(userController)
+var userRouter *mux.Router = mux.NewRouter()
 var userMapper mapper.UserMapper
+
+func init() {
+	userRouter = user.SetupUserRoutes(userRouter, userController)
+}
 
 func TestCreateHandler(t *testing.T) {
 	t.Run("Empty Body", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodPost, "/", nil)
+		req := httptest.NewRequest(http.MethodPost, "/users", nil)
 		res := httptest.NewRecorder()
 		userRouter.ServeHTTP(res, req)
 		assert.Equal(t, res.Code, http.StatusBadRequest)
 	})
 
 	t.Run("JSON to UserRequest", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("{}"))
+		req := httptest.NewRequest(http.MethodPost, "/users", strings.NewReader("{}"))
 		res := httptest.NewRecorder()
 		userRouter.ServeHTTP(res, req)
 		assert.Equal(t, res.Code, http.StatusBadRequest)
@@ -136,9 +141,9 @@ func TestCreateHandler(t *testing.T) {
 		jsonBody := fmt.Sprintf(
 			jsonRequestTemplate,
 			mockExistOneUserModel.Username,
-			mockFreeUserModel.Password,
+			mockFreeUserModel.Password_Hash,
 		)
-		req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(jsonBody))
+		req := httptest.NewRequest(http.MethodPost, "/users", strings.NewReader(jsonBody))
 		res := httptest.NewRecorder()
 		userRouter.ServeHTTP(res, req)
 		assert.Equal(t, res.Code, http.StatusConflict)
@@ -148,9 +153,9 @@ func TestCreateHandler(t *testing.T) {
 		jsonBody := fmt.Sprintf(
 			jsonRequestTemplate,
 			mockFreeUserModel.Username,
-			mockFreeUserModel.Password,
+			mockFreeUserModel.Password_Hash,
 		)
-		req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(jsonBody))
+		req := httptest.NewRequest(http.MethodPost, "/users", strings.NewReader(jsonBody))
 		res := httptest.NewRecorder()
 		userRouter.ServeHTTP(res, req)
 		assert.Equal(t, res.Code, http.StatusCreated)
@@ -168,7 +173,7 @@ func TestCreateHandler(t *testing.T) {
 
 func TestGetAllHandler(t *testing.T) {
 	t.Run("Get all: no param", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/all", nil)
+		req := httptest.NewRequest(http.MethodGet, "/users/all", nil)
 		res := httptest.NewRecorder()
 		userRouter.ServeHTTP(res, req)
 		assert.Equal(t, res.Code, http.StatusOK)
@@ -194,7 +199,7 @@ func TestGetAllHandler(t *testing.T) {
 		params := url.Values{}
 		params.Set("page", "1")
 		params.Set("limit", "1")
-		req := httptest.NewRequest(http.MethodGet, "/all?"+params.Encode(), nil)
+		req := httptest.NewRequest(http.MethodGet, "/users/all?"+params.Encode(), nil)
 		res := httptest.NewRecorder()
 		userRouter.ServeHTTP(res, req)
 		assert.Equal(t, res.Code, http.StatusOK)
@@ -220,7 +225,7 @@ func TestGetAllHandler(t *testing.T) {
 		params := url.Values{}
 		params.Set("page", "2")
 		params.Set("limit", "1")
-		req := httptest.NewRequest(http.MethodGet, "/all?"+params.Encode(), nil)
+		req := httptest.NewRequest(http.MethodGet, "/users/all?"+params.Encode(), nil)
 		res := httptest.NewRecorder()
 		userRouter.ServeHTTP(res, req)
 		assert.Equal(t, res.Code, http.StatusOK)
@@ -246,7 +251,7 @@ func TestGetAllHandler(t *testing.T) {
 		params := url.Values{}
 		params.Set("page", "1")
 		params.Set("limit", "2")
-		req := httptest.NewRequest(http.MethodGet, "/all?"+params.Encode(), nil)
+		req := httptest.NewRequest(http.MethodGet, "/users/all?"+params.Encode(), nil)
 		res := httptest.NewRecorder()
 		userRouter.ServeHTTP(res, req)
 		assert.Equal(t, res.Code, http.StatusOK)
@@ -272,7 +277,7 @@ func TestGetAllHandler(t *testing.T) {
 		params := url.Values{}
 		params.Set("page", "2")
 		params.Set("limit", "2")
-		req := httptest.NewRequest(http.MethodGet, "/all?"+params.Encode(), nil)
+		req := httptest.NewRequest(http.MethodGet, "/users/all?"+params.Encode(), nil)
 		res := httptest.NewRecorder()
 		userRouter.ServeHTTP(res, req)
 		assert.Equal(t, res.Code, http.StatusOK)
@@ -297,21 +302,21 @@ func TestGetAllHandler(t *testing.T) {
 
 func TestGetOneHandler(t *testing.T) {
 	t.Run("Empty id", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req := httptest.NewRequest(http.MethodGet, "/users/", nil)
 		res := httptest.NewRecorder()
 		userRouter.ServeHTTP(res, req)
 		assert.Equal(t, res.Code, http.StatusNotFound)
 	})
 
 	t.Run("User not found", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, fmt.Sprint("/", mockFreeUserModel.Id), nil)
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprint("/users/", mockFreeUserModel.Id), nil)
 		res := httptest.NewRecorder()
 		userRouter.ServeHTTP(res, req)
 		assert.Equal(t, res.Code, http.StatusNotFound)
 	})
 
 	t.Run("User found", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, fmt.Sprint("/", mockExistOneUserModel.Id), nil)
+		req := httptest.NewRequest(http.MethodGet, fmt.Sprint("/users/", mockExistOneUserModel.Id), nil)
 		res := httptest.NewRecorder()
 		userRouter.ServeHTTP(res, req)
 		assert.Equal(t, res.Code, http.StatusOK)
@@ -329,20 +334,20 @@ func TestGetOneHandler(t *testing.T) {
 
 func TestUpdateHandler(t *testing.T) {
 	t.Run("Empty id", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodPut, "/", nil)
+		req := httptest.NewRequest(http.MethodPut, "/users/", nil)
 		res := httptest.NewRecorder()
 		userRouter.ServeHTTP(res, req)
 		assert.Equal(t, res.Code, http.StatusNotFound)
 	})
 
 	t.Run("User not found", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodPut, fmt.Sprint("/", mockFreeUserModel.Id), nil)
+		req := httptest.NewRequest(http.MethodPut, fmt.Sprint("/users/", mockFreeUserModel.Id), nil)
 		res := httptest.NewRecorder()
 		userRouter.ServeHTTP(res, req)
 		assert.Equal(t, res.Code, http.StatusNotFound)
 	})
 
-	validPath := fmt.Sprint("/", mockExistOneUserModel.Id)
+	validPath := fmt.Sprint("/users/", mockExistOneUserModel.Id)
 
 	t.Run("Empty Body", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPut, validPath, nil)
@@ -362,7 +367,7 @@ func TestUpdateHandler(t *testing.T) {
 		jsonBody := fmt.Sprintf(
 			jsonRequestTemplate,
 			mockExistTwoUserModel.Username,
-			mockExistOneUserModel.Password,
+			mockExistOneUserModel.Password_Hash,
 		)
 		req := httptest.NewRequest(http.MethodPut, validPath, strings.NewReader(jsonBody))
 		res := httptest.NewRecorder()
@@ -374,7 +379,7 @@ func TestUpdateHandler(t *testing.T) {
 		jsonBody := fmt.Sprintf(
 			jsonRequestTemplate,
 			mockFreeUserModel.Username,
-			mockExistOneUserModel.Password,
+			mockExistOneUserModel.Password_Hash,
 		)
 		req := httptest.NewRequest(http.MethodPut, validPath, strings.NewReader(jsonBody))
 		res := httptest.NewRecorder()
@@ -394,21 +399,21 @@ func TestUpdateHandler(t *testing.T) {
 
 func TestDeleteHandler(t *testing.T) {
 	t.Run("Empty id", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodDelete, "/", nil)
+		req := httptest.NewRequest(http.MethodDelete, "/users/", nil)
 		res := httptest.NewRecorder()
 		userRouter.ServeHTTP(res, req)
 		assert.Equal(t, res.Code, http.StatusNotFound)
 	})
 
 	t.Run("User not found", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodDelete, fmt.Sprint("/", mockFreeUserModel.Id), nil)
+		req := httptest.NewRequest(http.MethodDelete, fmt.Sprint("/users/", mockFreeUserModel.Id), nil)
 		res := httptest.NewRecorder()
 		userRouter.ServeHTTP(res, req)
 		assert.Equal(t, res.Code, http.StatusNotFound)
 	})
 
 	t.Run("User deleted", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodDelete, fmt.Sprint("/", mockExistOneUserModel.Id), nil)
+		req := httptest.NewRequest(http.MethodDelete, fmt.Sprint("/users/", mockExistOneUserModel.Id), nil)
 		res := httptest.NewRecorder()
 		userRouter.ServeHTTP(res, req)
 		assert.Equal(t, res.Code, http.StatusNoContent)
