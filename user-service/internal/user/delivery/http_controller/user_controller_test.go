@@ -13,10 +13,12 @@ import (
 
 	"user-service/internal/dto"
 	"user-service/internal/mapper"
+	"user-service/internal/middleware"
 	"user-service/internal/model"
 	"user-service/internal/user"
 	"user-service/internal/user/mock"
 	"user-service/pkg/jwt"
+	"user-service/pkg/jwt/jwt_metadata"
 
 	"github.com/go-playground/assert/v2"
 	"github.com/gorilla/mux"
@@ -124,11 +126,24 @@ var token string
 
 func init() {
 	userRouter = user.SetupUserRoutes(userRouter, userController)
-	newToken, err := jwt.GenerateToken(jwt.NewClaims(100, "admin1", "administrator", 24*time.Hour))
+	jwtEncoder := jwt.NewJWTEncoder(middleware.Alg, middleware.Secret)
+
+	now := time.Now()
+	nowUnix := now.Unix()
+
+	newToken, err := jwtEncoder.Encode(
+		jwt_metadata.Claims{
+			Issuer:         "user-service",
+			Subject:        "admin",
+			ExpirationTime: now.Add(time.Hour * 15).Unix(),
+			NotBefore:      nowUnix,
+			IssuedAt:       nowUnix,
+		},
+	)
 	if err != nil {
 		panic(err)
 	}
-	token = newToken
+	token = *newToken
 }
 
 func TestCreateHandler(t *testing.T) {
@@ -408,19 +423,19 @@ func TestUpdateHandler(t *testing.T) {
 
 func TestDeleteHandler(t *testing.T) {
 
+	t.Run("No token", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodDelete, "/users/0", nil)
+		res := httptest.NewRecorder()
+		userRouter.ServeHTTP(res, req)
+		assert.Equal(t, res.Code, http.StatusUnauthorized)
+	})
+
 	t.Run("Empty id", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodDelete, "/users/", nil)
 		req.Header.Add("Authorization", "Bearer "+token)
 		res := httptest.NewRecorder()
 		userRouter.ServeHTTP(res, req)
 		assert.Equal(t, res.Code, http.StatusNotFound)
-	})
-
-	t.Run("No token", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodDelete, "/users/0", nil)
-		res := httptest.NewRecorder()
-		userRouter.ServeHTTP(res, req)
-		assert.Equal(t, res.Code, http.StatusUnauthorized)
 	})
 
 	t.Run("User not found", func(t *testing.T) {

@@ -2,7 +2,7 @@ package user
 
 import (
 	"net/http"
-	"user-service/pkg/jwt"
+	"user-service/internal/middleware"
 
 	"github.com/gorilla/mux"
 )
@@ -28,7 +28,7 @@ func SetupUserRoutes(router *mux.Router, userController UserController) *mux.Rou
 	putRoutes.Handle("/users/{id:[0-9]+}", userController.Update())
 
 	deleteRoutes := router.Methods(http.MethodDelete).Subrouter()
-	deleteRoutes.Handle("/users/{id:[0-9]+}", jwt.JWTMiddleware(userController.Delete()))
+	deleteRoutes.Handle("/users/{id:[0-9]+}", middleware.IsAdminMiddleware(userController.Delete()))
 
 	return router
 }
