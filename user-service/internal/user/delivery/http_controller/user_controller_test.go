@@ -9,7 +9,6 @@ import (
 	"slices"
 	"strings"
 	"testing"
-	"time"
 
 	"user-service/internal/dto"
 	"user-service/internal/mapper"
@@ -18,7 +17,6 @@ import (
 	"user-service/internal/user"
 	"user-service/internal/user/mock"
 	"user-service/pkg/jwt"
-	"user-service/pkg/jwt/jwt_metadata"
 
 	"github.com/go-playground/assert/v2"
 	"github.com/gorilla/mux"
@@ -126,24 +124,14 @@ var token string
 
 func init() {
 	userRouter = user.SetupUserRoutes(userRouter, userController)
-	jwtEncoder := jwt.NewJWTEncoder(middleware.Alg, middleware.Secret)
-
-	now := time.Now()
-	nowUnix := now.Unix()
-
-	newToken, err := jwtEncoder.Encode(
-		jwt_metadata.Claims{
-			Issuer:         "user-service",
-			Subject:        "admin",
-			ExpirationTime: now.Add(time.Hour * 15).Unix(),
-			NotBefore:      nowUnix,
-			IssuedAt:       nowUnix,
-		},
-	)
+	jwtCoder := jwt.NewJWTCoder(middleware.Alg, middleware.Secret, middleware.Issuer, middleware.Audience, middleware.ExpirationTimeDuration)
+	tokenInstance := jwtCoder.NewToken("admin", []string{"view", "update", "delete"})
+	strToken, err := jwtCoder.Encode(*tokenInstance)
 	if err != nil {
 		panic(err)
 	}
-	token = *newToken
+	token = *strToken
+	fmt.Printf("token: '%s'\n", token)
 }
 
 func TestCreateHandler(t *testing.T) {
@@ -422,7 +410,7 @@ func TestUpdateHandler(t *testing.T) {
 }
 
 func TestDeleteHandler(t *testing.T) {
-
+	auth := "Bearer " + token
 	t.Run("No token", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodDelete, "/users/0", nil)
 		res := httptest.NewRecorder()
@@ -432,7 +420,7 @@ func TestDeleteHandler(t *testing.T) {
 
 	t.Run("Empty id", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodDelete, "/users/", nil)
-		req.Header.Add("Authorization", "Bearer "+token)
+		req.Header.Add("Authorization", auth)
 		res := httptest.NewRecorder()
 		userRouter.ServeHTTP(res, req)
 		assert.Equal(t, res.Code, http.StatusNotFound)
@@ -440,7 +428,7 @@ func TestDeleteHandler(t *testing.T) {
 
 	t.Run("User not found", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodDelete, fmt.Sprint("/users/", mockFreeUserModel.Id), nil)
-		req.Header.Add("Authorization", "Bearer "+token)
+		req.Header.Add("Authorization", auth)
 		res := httptest.NewRecorder()
 		userRouter.ServeHTTP(res, req)
 		assert.Equal(t, res.Code, http.StatusNotFound)
@@ -448,7 +436,7 @@ func TestDeleteHandler(t *testing.T) {
 
 	t.Run("User deleted", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodDelete, fmt.Sprint("/users/", mockExistOneUserModel.Id), nil)
-		req.Header.Add("Authorization", "Bearer "+token)
+		req.Header.Add("Authorization", auth)
 		res := httptest.NewRecorder()
 		userRouter.ServeHTTP(res, req)
 		assert.Equal(t, res.Code, http.StatusNoContent)

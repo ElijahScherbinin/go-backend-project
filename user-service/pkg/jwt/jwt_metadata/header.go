@@ -30,10 +30,3 @@ func (h *Header) Validate() error {
 
 	return nil
 }
-
-func NewHeader(alg string) *Header {
-	return &Header{
-		Alg: alg,
-		Typ: "JWT",
-	}
-}

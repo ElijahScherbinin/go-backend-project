@@ -1,11 +1,12 @@
 package jwt_metadata
 
 import (
+	"strings"
 	"time"
 	"user-service/pkg/jwt/jwt_errors"
 )
 
-type Claims struct {
+type BaseClaims struct {
 	Issuer         string `json:"iss,omitempty"` // издатель токена
 	Subject        string `json:"sub"`           // субъект, которому выдан токен
 	Audience       string `json:"aud,omitempty"` // получатели, которым предназначается данный токен
@@ -15,14 +16,29 @@ type Claims struct {
 	JWTID          string `json:"jti,omitempty"` // уникальный идентификатор токена
 }
 
+type Claims struct {
+	BaseClaims
+	Permissions []string `json:"permissions,omitempty"` // права пользователя
+}
+
+// SetAudience устанавливает получателенй, которым предназначается данный токен
+func (p *Claims) SetAudience(audience []string) {
+	p.Audience = strings.Join(audience, ",")
+}
+
 // SetExpiration устанавливает время истечения токена
-func (p *Claims) SetExpiration(duration time.Duration) {
-	p.ExpirationTime = time.Now().Add(duration).Unix()
+func (p *Claims) SetExpiration(timeNow time.Time, duration time.Duration) {
+	p.ExpirationTime = timeNow.Add(duration).Unix()
 }
 
 // SetNotBefore устанавливает время начала действия токена
-func (p *Claims) SetNotBefore(duration time.Duration) {
-	p.NotBefore = time.Now().Add(duration).Unix()
+func (p *Claims) SetNotBefore(timeNow time.Time, duration time.Duration) {
+	p.NotBefore = timeNow.Add(duration).Unix()
+}
+
+// SetIssuedAt устанавливает время в котрое выдан токен
+func (p *Claims) SetIssuedAt(timeNow time.Time, duration time.Duration) {
+	p.IssuedAt = timeNow.Add(duration).Unix()
 }
 
 func (p *Claims) Validate() error {

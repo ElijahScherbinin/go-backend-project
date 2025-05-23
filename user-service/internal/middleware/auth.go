@@ -1,75 +1,48 @@
 package middleware
 
 import (
-	"context"
-	"fmt"
-	"log"
 	"net/http"
+	"slices"
+	"time"
 	"user-service/pkg/jwt"
 	"user-service/pkg/jwt/jwt_helper"
 	"user-service/pkg/jwt/jwt_metadata"
 )
 
-type contextKey string
+const Alg string = "HS256"                                       // TODO: remove
+const Secret string = "a-string-secret-at-least-256-bits-long"   // TODO: remove
+const Issuer string = "user-service"                             // TODO: remove
+var Audience []string = []string{"user-service", "test-service"} // TODO: remove
+const ExpirationTimeDuration time.Duration = time.Minute * 15    // TODO: remove
 
-var ClaimsKey contextKey = "claims"
+var jwtEncoder *jwt.JWTCoder = jwt.NewJWTCoder(Alg, Secret, Issuer, Audience, ExpirationTimeDuration)
 
-const Alg string = "HS256"                                     // TODO: remove
-const Secret string = "a-string-secret-at-least-256-bits-long" // TODO: remove
-
-var jwtEncoder *jwt.JWTEncoder = jwt.NewJWTEncoder(Alg, Secret)
-
-// JWTMiddleware - middleware для проверки JWT токена
-func JWTMiddleware(nextHandler http.Handler) http.Handler {
+// TODO: Доработать
+func IsAdminMiddleware(nextHandler http.Handler) http.Handler {
 	return http.HandlerFunc(
 		func(responseWriter http.ResponseWriter, requerst *http.Request) {
-			tokenString, err := jwt_helper.ExtractToken(requerst)
+			token, err := GetToken(requerst)
 			if err != nil {
-				log.Println("JWTMiddleware:", err)
 				http.Error(responseWriter, err.Error(), http.StatusUnauthorized)
 				return
 			}
-
-			claims, err := jwtEncoder.ExtractClaims(tokenString)
-			if err != nil {
-				log.Println("JWTMiddleware:", err)
-				http.Error(responseWriter, err.Error(), http.StatusUnauthorized)
+			if !slices.Contains(token.Claims.Permissions, "delete") {
+				http.Error(responseWriter, "Доступ запрещен", http.StatusForbidden)
 				return
 			}
-
-			// Добавляем claims в контекст запроса
-			ctx := context.WithValue(requerst.Context(), ClaimsKey, claims)
-			requerst = requerst.WithContext(ctx)
-
 			nextHandler.ServeHTTP(responseWriter, requerst)
 		},
 	)
 }
 
-// TODO: Доработать
-func IsAdminMiddleware(nextHandler http.Handler) http.Handler {
-	return JWTMiddleware(http.HandlerFunc(
-		func(responseWriter http.ResponseWriter, requerst *http.Request) {
-			claims, err := GetClaims(requerst)
-			if err != nil {
-				http.Error(responseWriter, err.Error(), http.StatusInternalServerError)
-			}
-			if claims.Subject != "admin" {
-				http.Error(responseWriter, "Доступ запрещен", http.StatusForbidden)
-			}
-			nextHandler.ServeHTTP(responseWriter, requerst)
-		},
-	))
-}
-
-func GetClaims(request *http.Request) (*jwt_metadata.Claims, error) {
-	claimsInterface := request.Context().Value(ClaimsKey)
-	if claimsInterface == nil {
-		return nil, fmt.Errorf("claims not found in context")
+func GetToken(request *http.Request) (*jwt_metadata.Token, error) {
+	tokenString, err := jwt_helper.ExtractToken(request)
+	if err != nil {
+		return nil, err
 	}
-
-	if claims, ok := claimsInterface.(*jwt_metadata.Claims); ok {
-		return claims, nil
+	token, err := jwtEncoder.Parse(tokenString)
+	if err != nil {
+		return nil, err
 	}
-	return nil, fmt.Errorf("invalid claims type in context")
+	return token, nil
 }
