@@ -22,7 +22,7 @@ func serializeToBase64[T jwt_metadata.SerializebleBase64](data *T) (*string, err
 	return &encodeData, nil
 }
 
-func generateSignature(encodedHeader, encodedClaims, algorithm, secret *string) []byte {
+func generateSignature(encodedHeader, encodedPayload, algorithm, secret *string) []byte {
 	var hash hash.Hash
 	bytesSecret := []byte(*secret)
 
@@ -40,7 +40,7 @@ func generateSignature(encodedHeader, encodedClaims, algorithm, secret *string) 
 	var buffer bytes.Buffer
 	buffer.WriteString(*encodedHeader)
 	buffer.WriteRune('.')
-	buffer.WriteString(*encodedClaims)
+	buffer.WriteString(*encodedPayload)
 	buffer.WriteTo(hash)
 
 	return hash.Sum(nil)
@@ -61,23 +61,23 @@ func parseHeader(headerBase64 *string) (*jwt_metadata.Header, error) {
 	return &header, nil
 }
 
-func parseClaims(claimsBase64 *string) (*jwt_metadata.Claims, error) {
-	claimsBytes, err := base64.RawURLEncoding.DecodeString(*claimsBase64)
+func parsePayload(payloadBase64 *string) (*jwt_metadata.Payload, error) {
+	payloadBytes, err := base64.RawURLEncoding.DecodeString(*payloadBase64)
 	if err != nil {
-		return nil, errors.Join(jwt_errors.ErrInvalidClaims, err)
+		return nil, errors.Join(jwt_errors.ErrInvalidPayload, err)
 	}
-	var claims jwt_metadata.Claims
-	if err := json.Unmarshal(claimsBytes, &claims); err != nil {
-		return nil, errors.Join(jwt_errors.ErrInvalidClaimsFormat, err)
+	var payload jwt_metadata.Payload
+	if err := json.Unmarshal(payloadBytes, &payload); err != nil {
+		return nil, errors.Join(jwt_errors.ErrInvalidPayloadFormat, err)
 	}
-	if err := claims.Validate(); err != nil {
+	if err := payload.Validate(); err != nil {
 		return nil, err
 	}
-	return &claims, nil
+	return &payload, nil
 }
 
-func validateSignature(headerBase64, claimsBase64, signatureBase64, algorithm, secret *string) error {
-	verifySignature := generateSignature(headerBase64, claimsBase64, algorithm, secret)
+func validateSignature(headerBase64, payloadBase64, signatureBase64, algorithm, secret *string) error {
+	verifySignature := generateSignature(headerBase64, payloadBase64, algorithm, secret)
 	verifySignatureBase64 := base64.RawURLEncoding.EncodeToString(verifySignature)
 	if !hmac.Equal([]byte(*signatureBase64), []byte(verifySignatureBase64)) {
 		return jwt_errors.ErrSignatureVerificationFailed

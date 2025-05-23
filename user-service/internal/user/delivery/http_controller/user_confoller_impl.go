@@ -23,16 +23,16 @@ type userControllerImpl struct {
 // Create implements user.UserController.
 func (userController *userControllerImpl) Create() http.Handler {
 	return http.HandlerFunc(
-		func(responseWriter http.ResponseWriter, requerst *http.Request) {
-			log.Println("UserController.Create:", requerst.URL.Path, "from", requerst.Host)
+		func(responseWriter http.ResponseWriter, request *http.Request) {
+			log.Println("UserController.Create:", request.URL.Path, "from", request.Host)
 
-			data, err := io.ReadAll(requerst.Body)
+			data, err := io.ReadAll(request.Body)
 			if err != nil {
 				errText := "Ошибка чтения тела запроса!"
 				http.Error(responseWriter, errText, http.StatusInternalServerError)
 				log.Println(
-					"UserController.Create:", requerst.URL.Path,
-					"from", requerst.Host,
+					"UserController.Create:", request.URL.Path,
+					"from", request.Host,
 					errText,
 					err,
 				)
@@ -43,8 +43,8 @@ func (userController *userControllerImpl) Create() http.Handler {
 				errText := "Получено пустое тело запроса!"
 				http.Error(responseWriter, errText, http.StatusBadRequest)
 				log.Println(
-					"UserController.Create:", requerst.URL.Path,
-					"from", requerst.Host,
+					"UserController.Create:", request.URL.Path,
+					"from", request.Host,
 					errText,
 					err,
 				)
@@ -56,8 +56,8 @@ func (userController *userControllerImpl) Create() http.Handler {
 				errText := "Ошибка конвертации JSON в dto.UserRequest!"
 				http.Error(responseWriter, errText, http.StatusBadRequest)
 				log.Println(
-					"UserController.Create:", requerst.URL.Path,
-					"from", requerst.Host,
+					"UserController.Create:", request.URL.Path,
+					"from", request.Host,
 					errText,
 					err,
 				)
@@ -69,8 +69,8 @@ func (userController *userControllerImpl) Create() http.Handler {
 				errText := "Ошибка конвертации dto.UserRequest в model.UserModel!"
 				http.Error(responseWriter, errText, http.StatusBadRequest)
 				log.Println(
-					"UserController.Create:", requerst.URL.Path,
-					"from", requerst.Host,
+					"UserController.Create:", request.URL.Path,
+					"from", request.Host,
 					errText,
 					err,
 				)
@@ -81,8 +81,8 @@ func (userController *userControllerImpl) Create() http.Handler {
 				errText := "Ошибка проверки существования пользователя с заданным именем!"
 				http.Error(responseWriter, errText, http.StatusInternalServerError)
 				log.Println(
-					"UserController.Create:", requerst.URL.Path,
-					"from", requerst.Host,
+					"UserController.Create:", request.URL.Path,
+					"from", request.Host,
 					errText,
 					err,
 				)
@@ -91,8 +91,8 @@ func (userController *userControllerImpl) Create() http.Handler {
 				errText := "Пользователь с заданным именем уже существует!"
 				http.Error(responseWriter, errText, http.StatusConflict)
 				log.Println(
-					"UserController.Create:", requerst.URL.Path,
-					"from", requerst.Host,
+					"UserController.Create:", request.URL.Path,
+					"from", request.Host,
 					errText,
 					err,
 				)
@@ -104,8 +104,8 @@ func (userController *userControllerImpl) Create() http.Handler {
 				errText := "Ошибка создания записи в базе данных!"
 				http.Error(responseWriter, errText, http.StatusInternalServerError)
 				log.Println(
-					"UserController.Create:", requerst.URL.Path,
-					"from", requerst.Host,
+					"UserController.Create:", request.URL.Path,
+					"from", request.Host,
 					errText,
 					err,
 				)
@@ -119,8 +119,8 @@ func (userController *userControllerImpl) Create() http.Handler {
 				errText := "Ошибка конвертации dto.UserResponse в JSON!"
 				http.Error(responseWriter, errText, http.StatusInternalServerError)
 				log.Println(
-					"UserController.Create:", requerst.URL.Path,
-					"from", requerst.Host,
+					"UserController.Create:", request.URL.Path,
+					"from", request.Host,
 					errText,
 					err,
 				)
@@ -128,8 +128,8 @@ func (userController *userControllerImpl) Create() http.Handler {
 			}
 
 			log.Println(
-				"UserController.Create:", requerst.URL.Path,
-				"from", requerst.Host,
+				"UserController.Create:", request.URL.Path,
+				"from", request.Host,
 				"result:",
 				dtoResponse,
 			)
@@ -140,10 +140,10 @@ func (userController *userControllerImpl) Create() http.Handler {
 // GetAll implements user.UserController.
 func (userController *userControllerImpl) GetAll() http.Handler {
 	return http.HandlerFunc(
-		func(responseWriter http.ResponseWriter, requerst *http.Request) {
-			log.Println("UserController.GetAll Handler Serving:", requerst.URL.Path, "from", requerst.Host)
+		func(responseWriter http.ResponseWriter, request *http.Request) {
+			log.Println("UserController.GetAll Handler Serving:", request.URL.Path, "from", request.Host)
 
-			queryParams := requerst.URL.Query()
+			queryParams := request.URL.Query()
 
 			pageNubmer, err := http_helper.GetQueryParam[int](queryParams, "page")
 			if err != nil {
@@ -154,8 +154,8 @@ func (userController *userControllerImpl) GetAll() http.Handler {
 					errText := "Ошибка конвертации параметра запроса id!"
 					http.Error(responseWriter, errText, http.StatusInternalServerError)
 					log.Println(
-						"UserController.GetAll:", requerst.URL.Path,
-						"from", requerst.Host,
+						"UserController.GetAll:", request.URL.Path,
+						"from", request.Host,
 						errText,
 						err,
 					)
@@ -175,8 +175,8 @@ func (userController *userControllerImpl) GetAll() http.Handler {
 					errText := "Ошибка конвертации параметра запроса limit!"
 					http.Error(responseWriter, errText, http.StatusInternalServerError)
 					log.Println(
-						"UserController.GetAll:", requerst.URL.Path,
-						"from", requerst.Host,
+						"UserController.GetAll:", request.URL.Path,
+						"from", request.Host,
 						errText,
 						err,
 					)
@@ -189,8 +189,8 @@ func (userController *userControllerImpl) GetAll() http.Handler {
 				errText := "Ошибка получения списка пользователей!"
 				http.Error(responseWriter, errText, http.StatusInternalServerError)
 				log.Println(
-					"UserController.GetAll:", requerst.URL.Path,
-					"from", requerst.Host,
+					"UserController.GetAll:", request.URL.Path,
+					"from", request.Host,
 					errText,
 					err,
 				)
@@ -207,8 +207,8 @@ func (userController *userControllerImpl) GetAll() http.Handler {
 				errText := "Ошибка конвертации []response.UserResponse в JSON!"
 				http.Error(responseWriter, errText, http.StatusInternalServerError)
 				log.Println(
-					"UserController.GetAll:", requerst.URL.Path,
-					"from", requerst.Host,
+					"UserController.GetAll:", request.URL.Path,
+					"from", request.Host,
 					errText,
 					err,
 				)
@@ -216,8 +216,8 @@ func (userController *userControllerImpl) GetAll() http.Handler {
 			}
 
 			log.Println(
-				"UserController.GetAll:", requerst.URL.Path,
-				"from", requerst.Host,
+				"UserController.GetAll:", request.URL.Path,
+				"from", request.Host,
 				"result:",
 				dtoResponses,
 			)
@@ -228,10 +228,10 @@ func (userController *userControllerImpl) GetAll() http.Handler {
 // GetOne implements user.UserController.
 func (userController *userControllerImpl) GetOne() http.Handler {
 	return http.HandlerFunc(
-		func(responseWriter http.ResponseWriter, requerst *http.Request) {
-			log.Println("UserController.GetOne Handler Serving:", requerst.URL.Path, "from", requerst.Host)
+		func(responseWriter http.ResponseWriter, request *http.Request) {
+			log.Println("UserController.GetOne Handler Serving:", request.URL.Path, "from", request.Host)
 
-			params := mux.Vars(requerst)
+			params := mux.Vars(request)
 			id, err := http_helper.GetRouteParam[int](params, "id")
 			if err != nil {
 				switch err {
@@ -239,8 +239,8 @@ func (userController *userControllerImpl) GetOne() http.Handler {
 					errText := "Ошибка заполнения параметра запроса id!"
 					http.Error(responseWriter, errText, http.StatusBadRequest)
 					log.Println(
-						"UserController.GetOne:", requerst.URL.Path,
-						"from", requerst.Host,
+						"UserController.GetOne:", request.URL.Path,
+						"from", request.Host,
 						errText,
 						err,
 					)
@@ -249,8 +249,8 @@ func (userController *userControllerImpl) GetOne() http.Handler {
 					errText := "Ошибка конвертации параметра запроса id!"
 					http.Error(responseWriter, errText, http.StatusInternalServerError)
 					log.Println(
-						"UserController.GetOne:", requerst.URL.Path,
-						"from", requerst.Host,
+						"UserController.GetOne:", request.URL.Path,
+						"from", request.Host,
 						errText,
 						err,
 					)
@@ -262,8 +262,8 @@ func (userController *userControllerImpl) GetOne() http.Handler {
 				errText := "Ошибка проверки существования пользователя с заданным id!"
 				http.Error(responseWriter, errText, http.StatusInternalServerError)
 				log.Println(
-					"UserController.GetOne:", requerst.URL.Path,
-					"from", requerst.Host,
+					"UserController.GetOne:", request.URL.Path,
+					"from", request.Host,
 					errText,
 					err,
 				)
@@ -272,8 +272,8 @@ func (userController *userControllerImpl) GetOne() http.Handler {
 				errText := "Пользователь с заданным id не существует!"
 				http.Error(responseWriter, errText, http.StatusNotFound)
 				log.Println(
-					"UserController.GetOne:", requerst.URL.Path,
-					"from", requerst.Host,
+					"UserController.GetOne:", request.URL.Path,
+					"from", request.Host,
 					errText,
 					err,
 				)
@@ -285,8 +285,8 @@ func (userController *userControllerImpl) GetOne() http.Handler {
 				errText := "Ошибка получения пользователя!"
 				http.Error(responseWriter, errText, http.StatusInternalServerError)
 				log.Println(
-					"UserController.GetOne:", requerst.URL.Path,
-					"from", requerst.Host,
+					"UserController.GetOne:", request.URL.Path,
+					"from", request.Host,
 					errText,
 					err,
 				)
@@ -299,8 +299,8 @@ func (userController *userControllerImpl) GetOne() http.Handler {
 				errText := "Ошибка конвертации response.UserResponse в JSON!"
 				http.Error(responseWriter, errText, http.StatusInternalServerError)
 				log.Println(
-					"UserController.GetOne:", requerst.URL.Path,
-					"from", requerst.Host,
+					"UserController.GetOne:", request.URL.Path,
+					"from", request.Host,
 					errText,
 					err,
 				)
@@ -308,8 +308,8 @@ func (userController *userControllerImpl) GetOne() http.Handler {
 			}
 
 			log.Println(
-				"UserController.GetOne:", requerst.URL.Path,
-				"from", requerst.Host,
+				"UserController.GetOne:", request.URL.Path,
+				"from", request.Host,
 				"result:",
 				dtoResponse,
 			)
@@ -320,10 +320,10 @@ func (userController *userControllerImpl) GetOne() http.Handler {
 // Update implements user.UserController.
 func (userController *userControllerImpl) Update() http.Handler {
 	return http.HandlerFunc(
-		func(responseWriter http.ResponseWriter, requerst *http.Request) {
-			log.Println("UserController.Update Handler Serving:", requerst.URL.Path, "from", requerst.Host)
+		func(responseWriter http.ResponseWriter, request *http.Request) {
+			log.Println("UserController.Update Handler Serving:", request.URL.Path, "from", request.Host)
 
-			params := mux.Vars(requerst)
+			params := mux.Vars(request)
 			id, err := http_helper.GetRouteParam[int](params, "id")
 			if err != nil {
 				switch err {
@@ -331,8 +331,8 @@ func (userController *userControllerImpl) Update() http.Handler {
 					errText := "Ошибка заполнения параметра запроса id!"
 					http.Error(responseWriter, errText, http.StatusBadRequest)
 					log.Println(
-						"UserController.Update:", requerst.URL.Path,
-						"from", requerst.Host,
+						"UserController.Update:", request.URL.Path,
+						"from", request.Host,
 						errText,
 						err,
 					)
@@ -341,8 +341,8 @@ func (userController *userControllerImpl) Update() http.Handler {
 					errText := "Ошибка конвертации параметра запроса id!"
 					http.Error(responseWriter, errText, http.StatusInternalServerError)
 					log.Println(
-						"UserController.Update:", requerst.URL.Path,
-						"from", requerst.Host,
+						"UserController.Update:", request.URL.Path,
+						"from", request.Host,
 						errText,
 						err,
 					)
@@ -354,8 +354,8 @@ func (userController *userControllerImpl) Update() http.Handler {
 				errText := "Ошибка проверки существования пользователя с заданным id!"
 				http.Error(responseWriter, errText, http.StatusInternalServerError)
 				log.Println(
-					"UserController.Update:", requerst.URL.Path,
-					"from", requerst.Host,
+					"UserController.Update:", request.URL.Path,
+					"from", request.Host,
 					errText,
 					err,
 				)
@@ -364,21 +364,21 @@ func (userController *userControllerImpl) Update() http.Handler {
 				errText := "Пользователь с заданным id не существует!"
 				http.Error(responseWriter, errText, http.StatusNotFound)
 				log.Println(
-					"UserController.Update:", requerst.URL.Path,
-					"from", requerst.Host,
+					"UserController.Update:", request.URL.Path,
+					"from", request.Host,
 					errText,
 					err,
 				)
 				return
 			}
 
-			data, err := io.ReadAll(requerst.Body)
+			data, err := io.ReadAll(request.Body)
 			if err != nil {
 				errText := "Ошибка чтения тела запроса!"
 				http.Error(responseWriter, errText, http.StatusBadRequest)
 				log.Println(
-					"UserController.Update:", requerst.URL.Path,
-					"from", requerst.Host,
+					"UserController.Update:", request.URL.Path,
+					"from", request.Host,
 					errText,
 					err,
 				)
@@ -389,8 +389,8 @@ func (userController *userControllerImpl) Update() http.Handler {
 				errText := "Получено пустое тело запроса!"
 				http.Error(responseWriter, errText, http.StatusBadRequest)
 				log.Println(
-					"UserController.Update:", requerst.URL.Path,
-					"from", requerst.Host,
+					"UserController.Update:", request.URL.Path,
+					"from", request.Host,
 					errText,
 					err,
 				)
@@ -402,8 +402,8 @@ func (userController *userControllerImpl) Update() http.Handler {
 				errText := "Ошибка конвертации JSON в dto.UserRequest!"
 				http.Error(responseWriter, errText, http.StatusBadRequest)
 				log.Println(
-					"UserController.Update:", requerst.URL.Path,
-					"from", requerst.Host,
+					"UserController.Update:", request.URL.Path,
+					"from", request.Host,
 					errText,
 					err,
 				)
@@ -415,8 +415,8 @@ func (userController *userControllerImpl) Update() http.Handler {
 				errText := "Ошибка конвертации dto.UserRequest в model.UserModel!"
 				http.Error(responseWriter, errText, http.StatusBadRequest)
 				log.Println(
-					"UserController.Update:", requerst.URL.Path,
-					"from", requerst.Host,
+					"UserController.Update:", request.URL.Path,
+					"from", request.Host,
 					errText,
 					err,
 				)
@@ -427,8 +427,8 @@ func (userController *userControllerImpl) Update() http.Handler {
 				errText := "Ошибка проверки существования пользователя с заданным именем!"
 				http.Error(responseWriter, errText, http.StatusInternalServerError)
 				log.Println(
-					"UserController.Update:", requerst.URL.Path,
-					"from", requerst.Host,
+					"UserController.Update:", request.URL.Path,
+					"from", request.Host,
 					errText,
 					err,
 				)
@@ -437,8 +437,8 @@ func (userController *userControllerImpl) Update() http.Handler {
 				errText := "Пользователь с заданным именем уже существует!"
 				http.Error(responseWriter, errText, http.StatusConflict)
 				log.Println(
-					"UserController.Update:", requerst.URL.Path,
-					"from", requerst.Host,
+					"UserController.Update:", request.URL.Path,
+					"from", request.Host,
 					errText,
 					err,
 				)
@@ -450,8 +450,8 @@ func (userController *userControllerImpl) Update() http.Handler {
 				errText := "Ошибка обновления записи в базе данных!"
 				http.Error(responseWriter, errText, http.StatusInternalServerError)
 				log.Println(
-					"UserController.Update:", requerst.URL.Path,
-					"from", requerst.Host,
+					"UserController.Update:", request.URL.Path,
+					"from", request.Host,
 					errText,
 					err,
 				)
@@ -464,8 +464,8 @@ func (userController *userControllerImpl) Update() http.Handler {
 				errText := "Ошибка конвертации response.UserResponse в JSON!"
 				http.Error(responseWriter, errText, http.StatusInternalServerError)
 				log.Println(
-					"UserController.Update:", requerst.URL.Path,
-					"from", requerst.Host,
+					"UserController.Update:", request.URL.Path,
+					"from", request.Host,
 					errText,
 					err,
 				)
@@ -473,8 +473,8 @@ func (userController *userControllerImpl) Update() http.Handler {
 			}
 
 			log.Println(
-				"UserController.Update:", requerst.URL.Path,
-				"from", requerst.Host,
+				"UserController.Update:", request.URL.Path,
+				"from", request.Host,
 				"result:",
 				dtoResponse,
 			)
@@ -485,10 +485,10 @@ func (userController *userControllerImpl) Update() http.Handler {
 // Delete implements user.UserController.
 func (userController *userControllerImpl) Delete() http.Handler {
 	return http.HandlerFunc(
-		func(responseWriter http.ResponseWriter, requerst *http.Request) {
-			log.Println("UserController.Delete Handler Serving:", requerst.URL.Path, "from", requerst.Host)
+		func(responseWriter http.ResponseWriter, request *http.Request) {
+			log.Println("UserController.Delete Handler Serving:", request.URL.Path, "from", request.Host)
 
-			params := mux.Vars(requerst)
+			params := mux.Vars(request)
 			id, err := http_helper.GetRouteParam[int](params, "id")
 			if err != nil {
 				switch err {
@@ -496,8 +496,8 @@ func (userController *userControllerImpl) Delete() http.Handler {
 					errText := "Ошибка заполнения параметра запроса id!"
 					http.Error(responseWriter, errText, http.StatusBadRequest)
 					log.Println(
-						"UserController.Delete:", requerst.URL.Path,
-						"from", requerst.Host,
+						"UserController.Delete:", request.URL.Path,
+						"from", request.Host,
 						errText,
 						err,
 					)
@@ -506,8 +506,8 @@ func (userController *userControllerImpl) Delete() http.Handler {
 					errText := "Ошибка конвертации параметра запроса id!"
 					http.Error(responseWriter, errText, http.StatusInternalServerError)
 					log.Println(
-						"UserController.Delete:", requerst.URL.Path,
-						"from", requerst.Host,
+						"UserController.Delete:", request.URL.Path,
+						"from", request.Host,
 						errText,
 						err,
 					)
@@ -519,8 +519,8 @@ func (userController *userControllerImpl) Delete() http.Handler {
 				errText := "Ошибка проверки существования пользователя с заданным id!"
 				http.Error(responseWriter, errText, http.StatusInternalServerError)
 				log.Println(
-					"UserController.Delete:", requerst.URL.Path,
-					"from", requerst.Host,
+					"UserController.Delete:", request.URL.Path,
+					"from", request.Host,
 					errText,
 					err,
 				)
@@ -529,8 +529,8 @@ func (userController *userControllerImpl) Delete() http.Handler {
 				errText := "Пользователь с заданным id не существует!"
 				http.Error(responseWriter, errText, http.StatusNotFound)
 				log.Println(
-					"UserController.Delete:", requerst.URL.Path,
-					"from", requerst.Host,
+					"UserController.Delete:", request.URL.Path,
+					"from", request.Host,
 					errText,
 					err,
 				)
@@ -541,8 +541,8 @@ func (userController *userControllerImpl) Delete() http.Handler {
 				errText := "Ошибка удаления пользователя!"
 				http.Error(responseWriter, errText, http.StatusInternalServerError)
 				log.Println(
-					"UserController.Delete:", requerst.URL.Path,
-					"from", requerst.Host,
+					"UserController.Delete:", request.URL.Path,
+					"from", request.Host,
 					errText,
 					err,
 				)

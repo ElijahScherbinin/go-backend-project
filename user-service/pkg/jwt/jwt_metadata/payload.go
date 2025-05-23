@@ -6,7 +6,7 @@ import (
 	"user-service/pkg/jwt/jwt_errors"
 )
 
-type BaseClaims struct {
+type BasePayload struct {
 	Issuer         string `json:"iss,omitempty"` // издатель токена
 	Subject        string `json:"sub"`           // субъект, которому выдан токен
 	Audience       string `json:"aud,omitempty"` // получатели, которым предназначается данный токен
@@ -16,41 +16,41 @@ type BaseClaims struct {
 	JWTID          string `json:"jti,omitempty"` // уникальный идентификатор токена
 }
 
-type Claims struct {
-	BaseClaims
+type Payload struct {
+	BasePayload
 	Role        string   `json:"role,omitempty"`        // роль пользователя
 	Permissions []string `json:"permissions,omitempty"` // права пользователя
 }
 
 // SetAudience устанавливает получателенй, которым предназначается данный токен
-func (p *Claims) SetAudience(audience []string) {
+func (p *Payload) SetAudience(audience []string) {
 	p.Audience = strings.Join(audience, ",")
 }
 
 // SetExpiration устанавливает время истечения токена
-func (p *Claims) SetExpiration(timeNow time.Time, duration time.Duration) {
+func (p *Payload) SetExpiration(timeNow time.Time, duration time.Duration) {
 	p.ExpirationTime = timeNow.Add(duration).Unix()
 }
 
 // SetNotBefore устанавливает время начала действия токена
-func (p *Claims) SetNotBefore(timeNow time.Time, duration time.Duration) {
+func (p *Payload) SetNotBefore(timeNow time.Time, duration time.Duration) {
 	p.NotBefore = timeNow.Add(duration).Unix()
 }
 
 // SetIssuedAt устанавливает время в котрое выдан токен
-func (p *Claims) SetIssuedAt(timeNow time.Time, duration time.Duration) {
+func (p *Payload) SetIssuedAt(timeNow time.Time, duration time.Duration) {
 	p.IssuedAt = timeNow.Add(duration).Unix()
 }
 
-func (p *Claims) Validate() error {
+func (p *Payload) Validate() error {
 	if p.ExpirationTime <= 0 {
-		return jwt_errors.ErrInvalidClaims
+		return jwt_errors.ErrInvalidPayload
 	}
 	if p.NotBefore <= 0 {
-		return jwt_errors.ErrInvalidClaims
+		return jwt_errors.ErrInvalidPayload
 	}
 	if p.IssuedAt <= 0 {
-		return jwt_errors.ErrInvalidClaims
+		return jwt_errors.ErrInvalidPayload
 	}
 	if p.ExpirationTime < p.NotBefore {
 		return jwt_errors.ErrInvalidTimeRange

@@ -23,24 +23,24 @@ func (c *JWTCoder) NewToken(subject, role string, permissions ...string) *jwt_me
 		Typ: "JWT",
 	}
 
-	claims := jwt_metadata.Claims{
-		BaseClaims: jwt_metadata.BaseClaims{
+	payload := jwt_metadata.Payload{
+		BasePayload: jwt_metadata.BasePayload{
 			Issuer:  c.issuer,
 			Subject: subject,
 		},
 		Role:        role,
 		Permissions: permissions,
 	}
-	claims.SetAudience(c.audience)
+	payload.SetAudience(c.audience)
 
 	timeNow := time.Now()
-	claims.SetExpiration(timeNow, c.expirationTimeDuration)
-	claims.SetNotBefore(timeNow, 0)
-	claims.SetIssuedAt(timeNow, 0)
+	payload.SetExpiration(timeNow, c.expirationTimeDuration)
+	payload.SetNotBefore(timeNow, 0)
+	payload.SetIssuedAt(timeNow, 0)
 
 	return &jwt_metadata.Token{
-		Header: header,
-		Claims: claims,
+		Header:  header,
+		Payload: payload,
 	}
 }
 
@@ -54,20 +54,20 @@ func (c *JWTCoder) Encode(token jwt_metadata.Token) (*string, error) {
 		return nil, errors.Join(jwt_errors.ErrTokenGeneration, err)
 	}
 
-	claims := &token.Claims
-	if err := claims.Validate(); err != nil {
+	payload := &token.Payload
+	if err := payload.Validate(); err != nil {
 		return nil, errors.Join(jwt_errors.ErrTokenGeneration, err)
 	}
-	claimsBase64, err := serializeToBase64(claims)
+	payloadBase64, err := serializeToBase64(payload)
 	if err != nil {
 		return nil, errors.Join(jwt_errors.ErrTokenGeneration, err)
 	}
 
-	encodedSignature := generateSignature(headerBase64, claimsBase64, &header.Alg, &c.secret)
+	encodedSignature := generateSignature(headerBase64, payloadBase64, &header.Alg, &c.secret)
 
 	tokenParts := []string{
 		*headerBase64,
-		*claimsBase64,
+		*payloadBase64,
 		string(base64.RawURLEncoding.EncodeToString(encodedSignature)),
 	}
 
@@ -87,7 +87,7 @@ func (c *JWTCoder) Parse(token string) (*jwt_metadata.Token, error) {
 		return nil, err
 	}
 
-	claims, err := parseClaims(&tokenParts[1])
+	payload, err := parsePayload(&tokenParts[1])
 	if err != nil {
 		return nil, err
 	}
@@ -97,8 +97,8 @@ func (c *JWTCoder) Parse(token string) (*jwt_metadata.Token, error) {
 	}
 
 	return &jwt_metadata.Token{
-		Header: *header,
-		Claims: *claims,
+		Header:  *header,
+		Payload: *payload,
 	}, nil
 }
 

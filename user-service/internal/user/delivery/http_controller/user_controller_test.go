@@ -125,7 +125,7 @@ var token string
 func init() {
 	userRouter = user.SetupUserRoutes(userRouter, userController)
 	jwtCoder := jwt.NewJWTCoder(middleware.Alg, middleware.Secret, middleware.Issuer, middleware.Audience, middleware.ExpirationTimeDuration)
-	tokenInstance := jwtCoder.NewToken("admin", "tester", []string{"view", "update", "delete"}...)
+	tokenInstance := jwtCoder.NewToken("username", "admin", []string{"view", "update", "delete"}...)
 	strToken, err := jwtCoder.Encode(*tokenInstance)
 	if err != nil {
 		panic(err)

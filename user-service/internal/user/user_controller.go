@@ -28,7 +28,7 @@ func SetupUserRoutes(router *mux.Router, userController UserController) *mux.Rou
 	putRoutes.Handle("/users/{id:[0-9]+}", userController.Update())
 
 	deleteRoutes := router.Methods(http.MethodDelete).Subrouter()
-	deleteRoutes.Handle("/users/{id:[0-9]+}", middleware.IsAdminMiddleware(userController.Delete()))
+	deleteRoutes.Handle("/users/{id:[0-9]+}", middleware.IsPermitionDeleteMiddleware(userController.Delete()))
 
 	return router
 }

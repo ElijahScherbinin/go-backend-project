@@ -1,6 +1,6 @@
 package jwt_metadata
 
 type Token struct {
-	Header Header
-	Claims Claims
+	Header  Header
+	Payload Payload
 }
