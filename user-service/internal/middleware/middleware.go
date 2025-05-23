@@ -25,7 +25,7 @@ func GetToken(request *http.Request) (*jwt_metadata.Token, error) {
 	return token, nil
 }
 
-func SavePayload(request *http.Request, payload *jwt_metadata.Payload) *http.Request {
+func PayloadToContext(request *http.Request, payload *jwt_metadata.Payload) *http.Request {
 	ctx := context.WithValue(request.Context(), PayloadContextKey, &payload)
 	return request.WithContext(ctx)
 }
