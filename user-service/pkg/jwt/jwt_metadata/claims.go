@@ -18,6 +18,7 @@ type BaseClaims struct {
 
 type Claims struct {
 	BaseClaims
+	Role        string   `json:"role,omitempty"`        // роль пользователя
 	Permissions []string `json:"permissions,omitempty"` // права пользователя
 }
 

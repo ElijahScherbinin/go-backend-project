@@ -17,7 +17,7 @@ type JWTCoder struct {
 	expirationTimeDuration time.Duration // Время жизни токена
 }
 
-func (c *JWTCoder) NewToken(subject string, permissions []string) *jwt_metadata.Token {
+func (c *JWTCoder) NewToken(subject, role string, permissions ...string) *jwt_metadata.Token {
 	header := jwt_metadata.Header{
 		Alg: c.alg,
 		Typ: "JWT",
@@ -28,6 +28,7 @@ func (c *JWTCoder) NewToken(subject string, permissions []string) *jwt_metadata.
 			Issuer:  c.issuer,
 			Subject: subject,
 		},
+		Role:        role,
 		Permissions: permissions,
 	}
 	claims.SetAudience(c.audience)
